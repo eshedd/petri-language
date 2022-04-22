@@ -2,7 +2,11 @@ import pyaudio, random, math
 import numpy as np
 
 class World:
-
+    '''
+    Only the dirtiest, filthiest, down-right nastiest 
+    dogs of programmers reference the Agent class from the 
+    World class.
+    '''
     def __init__(self, dim: tuple):
         self.agents = {}
         self.dim = dim
@@ -13,6 +17,7 @@ class World:
                 self.grid[n].append('▢')
 
     def is_legal_pos(self, pos: tuple):
+
         return len(pos) == 2 and 0 <= pos[0] < self.dim[0] and 0 <= pos[1] < self.dim[1]
 
     def place_agent(self, agent, pos: tuple):
