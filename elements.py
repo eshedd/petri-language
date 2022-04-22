@@ -7,18 +7,30 @@ class World:
     dogs of programmers reference the Agent class from the 
     World class.
     '''
-    def __init__(self, dim: tuple):
+    def __init__(self, dim: tuple, rand_walls=False, walliness=0.2):
         self.agents = {}
         self.dim = dim
         self.grid = []
         for n in range(self.dim[0]):
             self.grid.append([])
             for _ in range(self.dim[1]):
-                self.grid[n].append('▢')
+                if rand_walls and random.random() <= walliness:
+                    self.grid[n].append('■')
+                else:
+                    self.grid[n].append('▢')
+        self.place_goal()
+
+    def place_goal(self):
+        n = random.randint(0, self.dim[0])
+        m = random.randint(0, self.dim[1])
+        self.grid[n][m] = '🍌'
 
     def is_legal_pos(self, pos: tuple):
-
-        return len(pos) == 2 and 0 <= pos[0] < self.dim[0] and 0 <= pos[1] < self.dim[1]
+        (n, m) = pos
+        space = self.grid[n][m]
+        is_wall = space == '■'
+        in_dim = 0 <= n < self.dim[0] and 0 <= m < self.dim[1]
+        return len(pos) == 2 and in_dim and not is_wall
 
     def place_agent(self, agent, pos: tuple):
         if not self.is_legal_pos(pos):

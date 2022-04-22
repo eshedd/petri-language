@@ -5,7 +5,8 @@ from elements import World, Agent
     
 
 def main():
-    w = World(dim=(15,15))
+    print('\n')
+    w = World(dim=(15,15), rand_walls=True, walliness=0.3)
     paul = Agent(name='paul')
     w.place_agent(paul, pos=(0,0))
 
