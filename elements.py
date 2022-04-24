@@ -16,6 +16,11 @@ class World:
     World class.
     '''
     def __init__(self, dim: tuple, rand_walls=False, walliness=0.2):
+        '''
+        dim: dimensions of world (n x m), n rows, m columns
+        rand_walls: spatters world with random walls
+        walliness: prob of wall spawning when rand_walls=True
+        '''
         self.agents = {}
         self.dim = dim
         self.grid = []
@@ -92,6 +97,7 @@ class Agent:
     def __init__(self, name, thinking_aloud=False):
         self.name = name
         self.score = 0
+        self.trial = ()  # current trial memory
         self.thinking_aloud = thinking_aloud
 
     def __str__(self):
@@ -102,7 +108,6 @@ class Searcher(Agent):
 
     def __init__(self, name, thinking_aloud=False):
         self.words = {}
-        self.trial = ()  # current trial memory from plan to listen phase
         Agent.__init__(self, name, thinking_aloud)
 
     
@@ -137,7 +142,7 @@ class Searcher(Agent):
             return (np.sin(2*np.pi*np.arange(fs*duration)*f/fs)).astype(np.float32)
 
         print(f'{self} speaking...')
-
+        
         p = pyaudio.PyAudio()
 
         samples = generate_samples(FS, duration, f)
@@ -155,11 +160,17 @@ class Searcher(Agent):
         stream.close()
 
         p.terminate()
+
     
     def reward(self, world, action):
         return world.move_agent(self, action)
 
     def listen(self, world: World, permission: bool):
+        ''''
+        Searcher listens to permission and updates self.words 
+        according to reward
+        Takes in world to move self in above reward func
+        '''
         action, noise = self.trial
         # if not permission:
             # self.words[action][noise] = 1
@@ -167,6 +178,9 @@ class Searcher(Agent):
             reward = self.reward(world, action)
             self.words[action][noise] += reward
             self.score += reward
+            if reward >= 0: return action  # TODO: make better movement-success check
+        return None
+
 
     # Decision Functions
     @staticmethod
@@ -179,10 +193,10 @@ class Searcher(Agent):
         '''
         new_sound_prob: probability of a new sound
         1 - new_sound_prob: probability of using an existing sound
-
-        (1-new_sound_prob) is 
+        (1-new_sound_prob) is split into probabilistic intervals
+        then random number either falls in the intervals or new sound
         '''
-        new_sound_prob = 0.4
+        new_sound_prob = 0.25
         exponential_scores = map(math.exp, noise_dict.values())  # exponent because of negative scores
         total_score = sum(exponential_scores)
         c = (1-new_sound_prob)/total_score
@@ -197,7 +211,35 @@ class Searcher(Agent):
 
 
 class Interpreter(Agent):
+    '''
+    Listen to searcher w/ some handicap
+        distort with some noise function
+    Guess action from sound
+        measure distances between all existing sounds
+        if best match within threshold: guess best match
+        else: assume new noise
+            DEEPER: evaluate whether new noise is worth risk
+    If action hits wall: no permit
+    If action brings searcher closer to goal: permit
+        get agent distance from goal
+        if action brings closer: permit
+        if action goes further: no permit
+    '''
 
     def __init__(self, name, thinking_alound=False):
-
+        self.guessed_words = {}
         Agent.__init__(self, name, thinking_alound)
+
+    def listen(self, world, duration, f, distortion_func) -> bool :
+        duration = distortion_func(duration)
+        f = distortion_func(f)
+        self.trial = (duration, f)
+        if self.thinking_aloud:
+            print(f'{self} heard {self.trial}')
+        return True  # TODO: measure distances, make guess, choose permission
+        # action = self.get_guess(threshold)
+        # world.move_agent() TODO: differentiate between moving and experimenting
+        # might need a distance function added to World
+
+        
+        
