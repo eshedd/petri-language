@@ -33,18 +33,19 @@ class World:
         m = random.randint(0, self.dim[1] - 1)
         self.grid[n][m] = '!'
 
-    def is_goal_pos(self, pos: tuple):
+    def is_goal(self, pos: tuple):
         (n, m) = pos
         return self.grid[n][m] == '!'
 
-    def is_legal_pos(self, pos: tuple):
+    def is_legal(self, pos: tuple):
         (n, m) = pos
         return self.is_in_bounds(pos) and self.grid[n][m] != '■'
+
     def is_in_bounds(self, pos: tuple) -> bool:
         return len(pos) == 2 and 0 <= pos[0] < self.dim[0] and 0 <= pos[1] < self.dim[1]
 
     def place_agent(self, agent, pos: tuple):
-        if not self.is_in_bounds(pos):
+        if not self.is_in_bounds(pos) or self.is_goal(pos):
             print(f'illegal position ({pos}) for agent ({agent})')
             return False
         self.agents[str(agent)] = pos
@@ -66,14 +67,14 @@ class World:
         elif action == 'west':
             new_pos = (new_pos[0], new_pos[1] - 1)
 
-        if self.is_legal_pos(new_pos):
+        if self.is_legal(new_pos):
             print(f'{agent} @ {new_pos}')
+            if self.is_goal(new_pos):
+                print(f'{agent} reached goal!')
+                sys.exit()  # TODO: remove system exit; add proper exit case
             self.agents[str(agent)] = new_pos
             self.grid[pos[0]][pos[1]] = '▢'
             self.grid[new_pos[0]][new_pos[1]] = 'X'
-            if self.is_goal_pos(new_pos):
-                print(f'{agent} reached goal!')
-                sys.exit()
             return 1  # reward for taking valid move
         print(f'{agent} move failed')
         return -2  # reward for taking invalid move
@@ -93,6 +94,7 @@ class Agent:
         self.words = {}
         self.trial = ()  # internal agent knowledge
         self.thinking_aloud = thinking_aloud
+        self.score = 0
     
     def plan(self, w: World, decision_func):
         action = random.choice(ACTIONS)  # TODO: change to plannable actions
@@ -154,7 +156,9 @@ class Agent:
         if permission:
             if self.thinking_aloud:
                 print(f'{self} attempted {action}')
-            self.words[action][noise] += self.reward(world, action)
+            reward = self.reward(world, action)
+            self.words[action][noise] += reward
+            self.score += reward
 
 
     def __str__(self):

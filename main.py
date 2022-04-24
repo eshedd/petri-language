@@ -6,7 +6,7 @@ from elements import World, Agent
 
 def main():
     w = World(dim=(3,3), rand_walls=True, walliness=0.3)
-    paul = Agent(name='paul', thinking_aloud=True)
+    paul = Agent(name='paul', thinking_aloud=False)
     successfully_placed = w.place_agent(paul, pos=(0,0))
 
     if successfully_placed:
@@ -18,6 +18,7 @@ def main():
             print('Allow? (y/n)')
             permission = (input() == 'y')
             paul.listen(w, permission)
+    print(f'{paul}\'s score: {paul.score}')
 
 
 if __name__ == '__main__':
