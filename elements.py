@@ -4,8 +4,8 @@ import numpy as np
 ACTIONS = ['north', 'east', 'south', 'west']
 VOLUME = 0.5     # range [0.0, 1.0]
 FS = 44100       # sampling rate, Hz, must be integer
-F_THRESH_HIGH = 5000
-F_THRESH_LOW = 20
+F_THRESH_HIGH = 2500
+F_THRESH_LOW = 50
 DUR_LOW = 0
 DUR_HIGH = 7
 
@@ -91,10 +91,20 @@ class Agent:
 
     def __init__(self, name, thinking_aloud=False):
         self.name = name
-        self.words = {}
-        self.trial = ()  # internal agent knowledge
-        self.thinking_aloud = thinking_aloud
         self.score = 0
+        self.thinking_aloud = thinking_aloud
+
+    def __str__(self):
+        return self.name
+
+
+class Searcher(Agent):
+
+    def __init__(self, name, thinking_aloud=False):
+        self.words = {}
+        self.trial = ()  # current trial memory from plan to listen phase
+        Agent.__init__(self, name, thinking_aloud)
+
     
     def plan(self, w: World, decision_func):
         action = random.choice(ACTIONS)  # TODO: change to plannable actions
@@ -103,7 +113,7 @@ class Agent:
             self.words[action][self.get_new_noise()] = 0  # initialize noise/action score
 
         if self.thinking_aloud:
-            print(self.words[action])
+            print(f'{self}\'s {action} dictionary: {self.words[action]}')
 
         noise_choice = decision_func(self.words[action])
         if noise_choice not in self.words[action].keys():  # decision function tried new noise
@@ -154,15 +164,9 @@ class Agent:
         # if not permission:
             # self.words[action][noise] = 1
         if permission:
-            if self.thinking_aloud:
-                print(f'{self} attempted {action}')
             reward = self.reward(world, action)
             self.words[action][noise] += reward
             self.score += reward
-
-
-    def __str__(self):
-        return self.name
 
     # Decision Functions
     @staticmethod
@@ -189,4 +193,11 @@ class Agent:
                 growing_prob += math.exp(score) * c
                 if p <= growing_prob:
                     return noise
-        return Agent.get_new_noise()
+        return Searcher.get_new_noise()
+
+
+class Interpreter(Agent):
+
+    def __init__(self, name, thinking_alound=False):
+
+        Agent.__init__(self, name, thinking_alound)

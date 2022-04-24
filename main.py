@@ -1,4 +1,4 @@
-from elements import World, Agent
+from elements import World, Searcher, Interpreter
 
 # duration = 1.0   # in seconds, may be float
 # f = 440.0        # sine frequency, Hz, may be float
@@ -6,7 +6,7 @@ from elements import World, Agent
 
 def main():
     w = World(dim=(3,3), rand_walls=True, walliness=0.3)
-    paul = Agent(name='paul', thinking_aloud=False)
+    paul = Searcher(name='paul', thinking_aloud=False)
     successfully_placed = w.place_agent(paul, pos=(0,0))
 
     if successfully_placed:
