@@ -1,8 +1,8 @@
-from elements import World, Searcher, Interpreter
+from elements import World, Squealer, Interpreter
 
 # duration = 1.0   # in seconds, may be float
 # f = 440.0        # sine frequency, Hz, may be float
-def human_game(world: World, searcher: Searcher):
+def human_game(world: World, searcher: Squealer):
     while True:
         print('\n'+str(world)+'\n')
         (duration, f) = searcher.plan(world, searcher.uniform_less_greed_prob)
@@ -12,19 +12,19 @@ def human_game(world: World, searcher: Searcher):
         permission = (input() == 'y')
         searcher.listen(world, permission)
 
-def humanless_game(world: World, searcher: Searcher, interpreter: Interpreter):
+def humanless_game(world: World, searcher: Squealer, interpreter: Interpreter):
     distortion_func = lambda x: x
     while True:
         (duration, f) = searcher.plan(world, searcher.uniform_less_greed_prob)
-        permission = interpreter.listen(world, duration, f, distortion_func)
+        permission = interpreter.listen(world, duration, f, distortion_func, 1000)
         action = searcher.listen(world, permission)
         # interpreter.associate(action)
 
 
 
 def main():
-    w = World(dim=(3,3), rand_walls=True, walliness=0.3)
-    searcher = Searcher(name='paul', thinking_aloud=False)
+    w = World(dim=(2,2), rand_walls=True, walliness=0.3)
+    searcher = Squealer(name='paul', thinking_aloud=False)
     human_present = False
 
     successfully_placed = w.place_agent(searcher, pos=(0,0))
@@ -35,7 +35,7 @@ def main():
     if human_present:
         score = human_game(w, searcher)
     else:
-        interpreter = Interpreter(name='dave', thinking_alound=False)
+        interpreter = Interpreter(name='dave', thinking_alound=True)
         score = humanless_game(w, searcher, interpreter)
         
     # print(f'{searcher}\'s score: {searcher.score}')

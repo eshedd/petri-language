@@ -103,8 +103,7 @@ class Agent:
     def __str__(self):
         return self.name
 
-
-class Searcher(Agent):
+class Squealer(Agent):
 
     def __init__(self, name, thinking_aloud=False):
         self.words = {}
@@ -167,7 +166,7 @@ class Searcher(Agent):
 
     def listen(self, world: World, permission: bool):
         ''''
-        Searcher listens to permission and updates self.words 
+        Squealer listens to permission and updates self.words 
         according to reward
         Takes in world to move self in above reward func
         '''
@@ -207,12 +206,11 @@ class Searcher(Agent):
                 growing_prob += math.exp(score) * c
                 if p <= growing_prob:
                     return noise
-        return Searcher.get_new_noise()
-
+        return Squealer.get_new_noise()
 
 class Interpreter(Agent):
     '''
-    Listen to searcher w/ some handicap
+    Listen to squealer w/ some handicap
         distort with some noise function
     Guess action from sound
         measure distances between all existing sounds
@@ -220,7 +218,7 @@ class Interpreter(Agent):
         else: assume new noise
             DEEPER: evaluate whether new noise is worth risk
     If action hits wall: no permit
-    If action brings searcher closer to goal: permit
+    If action brings squealer closer to goal: permit
         get agent distance from goal
         if action brings closer: permit
         if action goes further: no permit
@@ -230,16 +228,116 @@ class Interpreter(Agent):
         self.guessed_words = {}
         Agent.__init__(self, name, thinking_alound)
 
-    def listen(self, world, duration, f, distortion_func) -> bool :
+    @staticmethod
+    def euclidean_distance(tup1: tuple, tup2: tuple):
+        vec1 = np.asarray(vec1)
+        vec2 = np.asarray(vec2)
+        return np.linalg.norm(vec1 - vec2)
+
+    def get_guess(self, new_noise_threshold):
+        '''
+        Find the best guess for action within the threshold.
+        If above threshold: returns False (meaning its an unidentified noise)
+        '''
+        if not self.guessed_words:
+            return False
+
+        # guessed_words has previous entries
+        min_k = None
+        min_v = float('inf')
+        min_dist = float('inf')
+        for k, v in self.guessed_words.items():
+            dist = self.euclidean_distance(self.trial, v)
+            if dist < min_dist:
+                min_k, min_v, min_dist = k, v, dist
+        if min_dist > new_noise_threshold:
+            # didn't make the cut, buddy
+            return False
+        return min_k  # return the best action
+
+    def listen(self, world: World, duration, f, distortion_func, new_noise_threshold) -> bool:
         duration = distortion_func(duration)
         f = distortion_func(f)
         self.trial = (duration, f)
         if self.thinking_aloud:
             print(f'{self} heard {self.trial}')
-        return True  # TODO: measure distances, make guess, choose permission
-        # action = self.get_guess(threshold)
+
+        # guess at which action the noise is associated with
+        action = self.get_guess(new_noise_threshold)
+
+        if not action:  # doesn't recognize the sound
+            return True
+        
+
         # world.move_agent() TODO: differentiate between moving and experimenting
         # might need a distance function added to World
 
         
-        
+       
+# # Python3 program for the above approach
+# from collections import deque as queue
+ 
+# # Direction vectors
+# dRow = [ -1, 0, 1, 0]
+# dCol = [ 0, 1, 0, -1]
+ 
+# # Function to check if a cell
+# # is be visited or not
+# def isValid(vis, row, col):
+   
+#     # If cell lies out of bounds
+#     if (row < 0 or col < 0 or row >= 4 or col >= 4):
+#         return False
+ 
+#     # If cell is already visited
+#     if (vis[row][col]):
+#         return False
+ 
+#     # Otherwise
+#     return True
+ 
+# # Function to perform the BFS traversal
+# def BFS(grid, vis, row, col):
+   
+#     # Stores indices of the matrix cells
+#     q = queue()
+ 
+#     # Mark the starting cell as visited
+#     # and push it into the queue
+#     q.append(( row, col ))
+#     vis[row][col] = True
+ 
+#     # Iterate while the queue
+#     # is not empty
+#     while (len(q) > 0):
+#         cell = q.popleft()
+#         x = cell[0]
+#         y = cell[1]
+#         print(grid[x][y], end = " ")
+ 
+#         #q.pop()
+ 
+#         # Go to the adjacent cells
+#         for i in range(4):
+#             adjx = x + dRow[i]
+#             adjy = y + dCol[i]
+#             if (isValid(vis, adjx, adjy)):
+#                 q.append((adjx, adjy))
+#                 vis[adjx][adjy] = True
+ 
+# # Driver Code
+# if __name__ == '__main__':
+   
+#     # Given input matrix
+#     grid= [ [ 1, 2, 3, 4 ],
+#            [ 5, 6, 7, 8 ],
+#            [ 9, 10, 11, 12 ],
+#            [ 13, 14, 15, 16 ] ]
+ 
+#     # Declare the visited array
+#     vis = [[ False for i in range(4)] for i in range(4)]
+#     # vis, False, sizeof vis)
+ 
+#     BFS(grid, vis, 0, 0)
+ 
+# # This code is contributed by mohit kumar 29.
