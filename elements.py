@@ -105,6 +105,24 @@ class Agent:
     def __str__(self):
         return self.name
 
+class Mouth:
+    def __init__(self, random_mouth=True):
+        if random_mouth:
+            self.tongue = {"index": random.uniform(6,35), "diameter": random.uniform(1,5)}
+            self.constriction = {"index": random.uniform(6,35), "diameter": random.uniform(1,5)}
+            self.duration = random.uniform(0,5)
+            self.timeout = random.uniform(0.2,3)
+            self.intensity = random.uniform(0,1)
+            self.tenseness = random.uniform(0,1)
+            self.frequency = random.uniform(20,1000)
+
+    def __str__(self):
+        return "".join(f'{self.tongue["index"]}|{self.tongue["diameter"]}| \
+                {self.constriction["index"]}|{self.constriction["diameter"]}\
+                {self.duration}|{self.timeout}|{self.intensity}|\
+                {self.tenseness}|{self.frequency}'.split())
+
+
 class Squealer(Agent):
     def __init__(self, name, thinking_aloud=False):
         self.words = {}
@@ -136,15 +154,14 @@ class Squealer(Agent):
         f = random.uniform(F_THRESH_LOW, F_THRESH_HIGH)  # sine frequency, Hz, may be float
         return (duration, f)
 
-    def speak_human(self, duration, f):
-        async def send_socket():
+    def speak_human(self, mouth: Mouth):
+        async def send_socket(mouth: Mouth):
             async with websockets.connect("ws://localhost:5678") as websocket:
                 print(f'{self} speaking...')
-                await websocket.send("pee")
-                await websocket.recv()
+                await websocket.send(str(mouth))
 
         loop = asyncio.get_event_loop()
-        coroutine = send_socket()
+        coroutine = send_socket(mouth)
         loop.run_until_complete(coroutine)
 
     def speak(self, duration, f):

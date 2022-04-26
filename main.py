@@ -1,4 +1,4 @@
-from elements import World, Squealer, Interpreter
+from elements import World, Squealer, Interpreter, Mouth
 import websockets
 # duration = 1.0   # in seconds, may be float
 # f = 440.0        # sine frequency, Hz, may be float
@@ -6,7 +6,7 @@ def human_game(world: World, searcher: Squealer):
     while True:
         print('\n'+str(world)+'\n')
         (duration, f) = searcher.plan(world, searcher.uniform_less_greed_prob)
-        searcher.speak_human(duration, f)
+        searcher.speak_human(Mouth())
 
         print('Allow? (y/n)')
         permission = (input() == 'y')

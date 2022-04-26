@@ -23,9 +23,9 @@ class Server:
     async def handler(self, websocket, path):
       self.connected.add(websocket)
       async for message in websocket:
-        if message == "pee":
+        if message:
             try:
-                await asyncio.wait([ws.send("Peeing!") for ws in self.connected])
+                await asyncio.wait([ws.send(message) for ws in self.connected])
             except:
                 print("oopsie")
 
