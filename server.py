@@ -1,10 +1,16 @@
 import os
 import asyncio
 import websockets
+import sys
 
 import subprocess
 
-subprocess.Popen(["python3", "-m", "http.server", "8080"])
+PORT = 8080
+
+if len(sys.argv) > 1:
+    PORT = sys.argv[1]
+
+subprocess.Popen(["python3", "-m", "http.server", str(PORT)])
 
 
 class Server:
@@ -23,7 +29,7 @@ class Server:
     async def handler(self, websocket, path):
       self.connected.add(websocket)
       async for message in websocket:
-        if message:
+        if message[0] != 'r':
             try:
                 await asyncio.wait([ws.send(message) for ws in self.connected])
             except:
