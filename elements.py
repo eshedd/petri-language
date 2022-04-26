@@ -118,7 +118,7 @@ class Mouth:
 
     def __str__(self):
         return "".join(f'{self.tongue["index"]}|{self.tongue["diameter"]}| \
-                {self.constriction["index"]}|{self.constriction["diameter"]}\
+                {self.constriction["index"]}|{self.constriction["diameter"]}|\
                 {self.duration}|{self.timeout}|{self.intensity}|\
                 {self.tenseness}|{self.frequency}'.split())
 
@@ -158,6 +158,7 @@ class Squealer(Agent):
         async def send_socket(mouth: Mouth):
             async with websockets.connect("ws://localhost:5678") as websocket:
                 print(f'{self} speaking...')
+                print(mouth)
                 await websocket.send(str(mouth))
 
         loop = asyncio.get_event_loop()
