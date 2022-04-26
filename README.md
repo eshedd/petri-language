@@ -7,5 +7,5 @@ The ultimate goal of this project is to procure a non-deterministically generate
 ### Usage
 - Start the server
 - ```python3 server.py```
-- Open `localhost:[port]/Pink-Trombone` to connect the m̶͖̪̲̠̗̞̓̊ȯ̷͈͆u̷̢̪̙̬͇̽ť̸̛̤͈̈͑́͝͝h̸̦͛̈͐̿̏
+- Open `http://localhost:[port]/Pink-Trombone` to connect the m̶͖̪̲̠̗̞̓̊ȯ̷͈͆u̷̢̪̙̬͇̽ť̸̛̤͈̈͑́͝͝h̸̦͛̈͐̿̏
 - Put Paul (and Dave and everyone else) on their Journey with ```python3 main.py```
