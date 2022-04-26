@@ -2,6 +2,10 @@ import os
 import asyncio
 import websockets
 
+import subprocess
+
+subprocess.Popen(["python3", "-m", "http.server", "8080"])
+
 
 class Server:
     connected = set()
