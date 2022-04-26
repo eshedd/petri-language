@@ -1,5 +1,7 @@
-import pyaudio, random, math, sys
+import random, math, sys
 import numpy as np
+import datetime, random, websockets
+import asyncio
 
 ACTIONS = ['north', 'east', 'south', 'west']
 VOLUME = 0.5     # range [0.0, 1.0]
@@ -104,7 +106,6 @@ class Agent:
         return self.name
 
 class Squealer(Agent):
-
     def __init__(self, name, thinking_aloud=False):
         self.words = {}
         Agent.__init__(self, name, thinking_aloud)
@@ -134,6 +135,17 @@ class Squealer(Agent):
         duration = random.uniform(DUR_LOW, DUR_HIGH)  # in seconds, may be float
         f = random.uniform(F_THRESH_LOW, F_THRESH_HIGH)  # sine frequency, Hz, may be float
         return (duration, f)
+
+    def speak_human(self, duration, f):
+        async def send_socket():
+            async with websockets.connect("ws://localhost:5678") as websocket:
+                print(f'{self} speaking...')
+                await websocket.send("pee")
+                await websocket.recv()
+
+        loop = asyncio.get_event_loop()
+        coroutine = send_socket()
+        loop.run_until_complete(coroutine)
 
     def speak(self, duration, f):
         # generate samples, note conversion to float32 array

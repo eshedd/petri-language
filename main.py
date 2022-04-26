@@ -1,12 +1,12 @@
 from elements import World, Squealer, Interpreter
-
+import websockets
 # duration = 1.0   # in seconds, may be float
 # f = 440.0        # sine frequency, Hz, may be float
 def human_game(world: World, searcher: Squealer):
     while True:
         print('\n'+str(world)+'\n')
         (duration, f) = searcher.plan(world, searcher.uniform_less_greed_prob)
-        searcher.speak(duration, f)
+        searcher.speak_human(duration, f)
 
         print('Allow? (y/n)')
         permission = (input() == 'y')
@@ -23,9 +23,9 @@ def humanless_game(world: World, searcher: Squealer, interpreter: Interpreter):
 
 
 def main():
-    w = World(dim=(2,2), rand_walls=True, walliness=0.3)
+    w = World(dim=(10,10), rand_walls=True, walliness=0.3)
     searcher = Squealer(name='paul', thinking_aloud=False)
-    human_present = False
+    human_present = True
 
     successfully_placed = w.place_agent(searcher, pos=(0,0))
     while not successfully_placed:
