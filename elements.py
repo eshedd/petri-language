@@ -177,7 +177,8 @@ class Squealer(Agent):
             reward = self.reward(world, action)
             self.words[action][noise] += reward
             self.score += reward
-            if reward >= 0: return action  # TODO: make better movement-success check
+            if reward >= 0: 
+                return action  # TODO: make better movement-success check (right now it just checks for positive reward)
         return None
 
 
@@ -225,13 +226,13 @@ class Interpreter(Agent):
     '''
 
     def __init__(self, name, thinking_alound=False):
-        self.guessed_words = {}
+        self.learned_words = {}
         Agent.__init__(self, name, thinking_alound)
 
     @staticmethod
     def euclidean_distance(tup1: tuple, tup2: tuple):
-        vec1 = np.asarray(vec1)
-        vec2 = np.asarray(vec2)
+        vec1 = np.asarray(tup1)
+        vec2 = np.asarray(tup2)
         return np.linalg.norm(vec1 - vec2)
 
     def get_guess(self, new_noise_threshold):
@@ -239,21 +240,23 @@ class Interpreter(Agent):
         Find the best guess for action within the threshold.
         If above threshold: returns False (meaning its an unidentified noise)
         '''
-        if not self.guessed_words:
+        if not self.learned_words:
             return False
 
-        # guessed_words has previous entries
-        min_k = None
-        min_v = float('inf')
+        # learned_words has previous entries
+        min_action = None
         min_dist = float('inf')
-        for k, v in self.guessed_words.items():
-            dist = self.euclidean_distance(self.trial, v)
-            if dist < min_dist:
-                min_k, min_v, min_dist = k, v, dist
+        print(self.learned_words)
+        for action, noises in self.learned_words.items():
+            for noise in noises:
+                dist = self.euclidean_distance(self.trial, noise)
+                if dist < min_dist:
+                    min_k, min_dist = action, dist
+        print(min_dist)
         if min_dist > new_noise_threshold:
             # didn't make the cut, buddy
             return False
-        return min_k  # return the best action
+        return min_action  # return the best action
 
     def listen(self, world: World, duration, f, distortion_func, new_noise_threshold) -> bool:
         duration = distortion_func(duration)
@@ -264,14 +267,17 @@ class Interpreter(Agent):
 
         # guess at which action the noise is associated with
         action = self.get_guess(new_noise_threshold)
-
+        print('guess:', action)
         if not action:  # doesn't recognize the sound
             return True
         
-
         # world.move_agent() TODO: differentiate between moving and experimenting
         # might need a distance function added to World
 
+    def associate(self, action):
+        if action not in self.learned_words.keys():
+            self.learned_words[action] = []
+        self.learned_words[action].append(self.trial)
         
        
 # # Python3 program for the above approach

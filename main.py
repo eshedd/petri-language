@@ -2,28 +2,29 @@ from elements import World, Squealer, Interpreter
 
 # duration = 1.0   # in seconds, may be float
 # f = 440.0        # sine frequency, Hz, may be float
-def human_game(world: World, searcher: Squealer):
+def human_game(world: World, squealer: Squealer):
     while True:
         print('\n'+str(world)+'\n')
-        (duration, f) = searcher.plan(world, searcher.uniform_less_greed_prob)
-        searcher.speak(duration, f)
+        (duration, f) = squealer.plan(world, squealer.uniform_less_greed_prob)
+        squealer.speak(duration, f)
 
         print('Allow? (y/n)')
         permission = (input() == 'y')
-        searcher.listen(world, permission)
+        squealer.listen(world, permission)
 
-def humanless_game(world: World, searcher: Squealer, interpreter: Interpreter):
+def humanless_game(world: World, squealer: Squealer, interpreter: Interpreter):
     distortion_func = lambda x: x
     while True:
-        (duration, f) = searcher.plan(world, searcher.uniform_less_greed_prob)
-        permission = interpreter.listen(world, duration, f, distortion_func, 1000)
-        action = searcher.listen(world, permission)
-        # interpreter.associate(action)
+        (duration, f) = squealer.plan(world, squealer.uniform_less_greed_prob)
+        permission = interpreter.listen(world, duration, f, distortion_func, 100)
+        action = squealer.listen(world, permission)
+        if action:
+            interpreter.associate(action)
 
 
 
 def main():
-    w = World(dim=(2,2), rand_walls=True, walliness=0.3)
+    w = World(dim=(4,4), rand_walls=False, walliness=0.3)
     searcher = Squealer(name='paul', thinking_aloud=False)
     human_present = False
 
@@ -35,7 +36,7 @@ def main():
     if human_present:
         score = human_game(w, searcher)
     else:
-        interpreter = Interpreter(name='dave', thinking_alound=True)
+        interpreter = Interpreter(name='dave', thinking_alound=False)
         score = humanless_game(w, searcher, interpreter)
         
     # print(f'{searcher}\'s score: {searcher.score}')
