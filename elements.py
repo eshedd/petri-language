@@ -141,26 +141,19 @@ class Squealer(Agent):
             return (np.sin(2*np.pi*np.arange(fs*duration)*f/fs)).astype(np.float32)
 
         print(f'{self} speaking...')
-        
         p = pyaudio.PyAudio()
-
         samples = generate_samples(FS, duration, f)
-
         # for paFloat32 sample values must be in range [-1.0, 1.0]
         stream = p.open(format=pyaudio.paFloat32,
                         channels=1,
                         rate=FS,
                         output=True)
-
         # play. May repeat with different volume values (if done interactively) 
         stream.write(VOLUME*samples)
-
         stream.stop_stream()
         stream.close()
-
         p.terminate()
 
-    
     def reward(self, world, action):
         return world.move_agent(self, action)
 
@@ -345,5 +338,3 @@ class Interpreter(Agent):
 #     # vis, False, sizeof vis)
  
 #     BFS(grid, vis, 0, 0)
- 
-# # This code is contributed by mohit kumar 29.

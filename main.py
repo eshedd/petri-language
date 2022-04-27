@@ -25,21 +25,21 @@ def humanless_game(world: World, squealer: Squealer, interpreter: Interpreter):
 
 def main():
     w = World(dim=(4,4), rand_walls=False, walliness=0.3)
-    searcher = Squealer(name='paul', thinking_aloud=False)
+    squealer = Squealer(name='paul', thinking_aloud=False)
     human_present = False
 
-    successfully_placed = w.place_agent(searcher, pos=(0,0))
+    successfully_placed = w.place_agent(squealer, pos=(0,0))
     while not successfully_placed:
-        pos = input(f'trouble placing {searcher}, give coords (\'n, m\'):')
-        successfully_placed = w.place_agent(searcher, pos=pos)
+        pos = input(f'trouble placing {squealer}, give coords (\'n, m\'):')
+        successfully_placed = w.place_agent(squealer, pos=pos)
 
     if human_present:
-        score = human_game(w, searcher)
+        score = human_game(w, squealer)
     else:
         interpreter = Interpreter(name='dave', thinking_alound=False)
-        score = humanless_game(w, searcher, interpreter)
+        score = humanless_game(w, squealer, interpreter)
         
-    # print(f'{searcher}\'s score: {searcher.score}')
+    # print(f'{squealer}\'s score: {squealer.score}')
 
 
 if __name__ == '__main__':
