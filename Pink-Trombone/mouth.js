@@ -23,7 +23,7 @@ function prepareMouth(){
         // say(12.9, 0.9, 1.5, 1, 0.7, 0.6, 120)
         // say(12.9, 0.9, 1.5, 1, 0.7, 0.6, 200)
         // shutUp()
-        say({ index: randomNumber(6, 35), diameter: randomNumber(1, 5) }, { index: randomNumber(-50, 50), diameter: randomNumber(6, 35) }, randomNumber(0, 5), randomNumber(0.2, 3), randomNumber(0, 1), randomNumber(0, 1), randomNumber(20, 1000)).then(shutUp)
+        say({ index: randomNumber(6, 35), diameter: randomNumber(1, 5) }, { index: randomNumber(-50, 50), diameter: randomNumber(-1, 35) }, randomNumber(0, 5), randomNumber(0.2, 3), randomNumber(0, 1), randomNumber(0, 1), randomNumber(20, 1000)).then(shutUp)
     })
 };
 var dataFull = [];
