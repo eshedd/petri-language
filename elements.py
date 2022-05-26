@@ -2,6 +2,7 @@ import random, math, sys
 import numpy as np
 import datetime, random, websockets
 import asyncio
+import hashlib
 
 ACTIONS = ['north', 'east', 'south', 'west']
 VOLUME = 0.5     # range [0.0, 1.0]

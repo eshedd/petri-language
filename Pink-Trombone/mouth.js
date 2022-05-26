@@ -51,8 +51,10 @@ function recordForDuration(listenInterval = DEFAULT_LISTEN_INTERVAL, recordDurat
 }
 ws.onmessage = function (event) {
     // console.log(event);
-    params = event.data.split('|').map(Number);
-    startListening();
-    say({ index: params[0], diameter: params[1] }, { index: params[2], diameter: params[3] }, params[4], params[5], params[6], params[7], params[8]).then(() => { sendData(); shutUp(); });
+    if(event.data[0] == "M"){   
+        params = event.data.split('|').map(Number);
+        startListening();
+        say({ index: params[0], diameter: params[1] }, { index: params[2], diameter: params[3] }, params[4], params[5], params[6], params[7], params[8]).then(() => { sendData(); shutUp(); });
+    }
 };
 
