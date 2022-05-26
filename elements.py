@@ -159,7 +159,7 @@ class Squealer(Agent):
             async with websockets.connect("ws://localhost:5678") as websocket:
                 print(f'{self} speaking...')
                 print(mouth)
-                await websocket.send(str(mouth))
+                await websocket.send(f"M:{mouth}")
 
         loop = asyncio.get_event_loop()
         coroutine = send_socket(mouth)

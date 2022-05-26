@@ -28,12 +28,28 @@ class Server:
 
     async def handler(self, websocket, path):
       self.connected.add(websocket)
+      recvSound = False
+      doneRecv = False
+      testBuff = []
       async for message in websocket:
-        if message[0] != 'r':
+        if recvSound:
+            testBuff.append(list(message))
+            recvSound = False
+            if(doneRecv):
+                print(testBuff)
+                testBuff = []
+                doneRecv = False
+        elif message[0] == "M":
             try:
                 await asyncio.wait([ws.send(message) for ws in self.connected])
             except:
                 print("oopsie")
+        elif message[0] == "S":
+            print(message)
+            recvSound = True
+            [position, length] = message[2:].split("/")
+            if(position==length):
+                doneRecv = True
 
 if __name__ == '__main__':
   ws = Server()
