@@ -28,7 +28,7 @@ class Server:
         return websockets.serve(self.handler, self.get_host(), self.get_port())
     
     def save_noise(self):
-        fname = f'mouth_sounds/{Server.current_noise_hash}-{datetime.datetime.now()}.pickle'
+        fname = f'mouth_sounds/{Server.current_noise_hash}_{datetime.datetime.now().strftime("%Y-%m-%d_%H:%M:%S")}.pickle'
         with open(fname, 'wb') as f:
             pickle.dump(Server.current_noise, f)
         return fname
@@ -45,7 +45,7 @@ class Server:
             if(doneRecv):
                 Server.current_noise = testBuff
                 filename = self.save_noise()
-                await asyncio.wait([websocket.send(filename) for websocket in self.connected])
+                await asyncio.wait([websocket.send(f'F:{filename}') for websocket in self.connected])
                 testBuff = []
                 doneRecv = False
         elif message[0] == "M":

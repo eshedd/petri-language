@@ -161,6 +161,10 @@ class Squealer(Agent):
                 print(f'{self} speaking...')
                 print(mouth)
                 await websocket.send(f"M:{mouth}")
+                new_message = await websocket.recv()
+                if new_message[0:2] != 'F:':
+                    new_sound = await websocket.recv()
+                print(f'Paul was all like:\n {new_sound}')
 
         loop = asyncio.get_event_loop()
         coroutine = send_socket(mouth)
