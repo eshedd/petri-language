@@ -109,11 +109,11 @@ class Agent:
 class Mouth:
     def __init__(self, random_mouth=True):
         if random_mouth:
-            self.tongue = {"index": random.uniform(6,35), "diameter": random.uniform(1,5)}
-            self.constriction = {"index": random.uniform(6,50), "diameter": random.uniform(-1,5)}
+            self.tongue = {"index": random.uniform(0,35), "diameter": random.uniform(0,6)}
+            self.constriction = {"index": random.uniform(2,50), "diameter": random.uniform(-1,4)}
             self.duration = random.uniform(0,5)
             self.timeout = random.uniform(0.2,3)
-            self.intensity = random.uniform(0,1)
+            self.intensity = random.uniform(0.3,1)
             self.tenseness = random.uniform(0,1)
             self.frequency = random.uniform(20,1000)
 
