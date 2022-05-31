@@ -1,4 +1,7 @@
-import os, sys, asyncio, subprocess
+import os
+import sys
+import asyncio
+import subprocess
 import websockets
 import hashlib
 import pickle
@@ -10,7 +13,7 @@ if len(sys.argv) > 1:
     PORT = sys.argv[1]
 
 if __name__ == '__main__':
-    subprocess.Popen(["python3", "-m", "http.server", str(PORT)])
+    subprocess.Popen(["python3", "-m", "startHTTP.py", str(PORT)])
 
 
 class Server:
@@ -26,7 +29,7 @@ class Server:
 
     def start(self):
         return websockets.serve(self.handler, self.get_host(), self.get_port())
-    
+
     def save_noise(self):
         fname = f'mouth_sounds/{Server.current_noise_hash}_{datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}.pickle'
         with open(fname, 'wb') as f:
@@ -34,36 +37,32 @@ class Server:
         return fname
 
     async def handler(self, websocket, path):
-      self.connected.add(websocket)
-      recvSound = False
-      doneRecv = False
-      testBuff = []
-      async for message in websocket:
-        if recvSound:
-            testBuff.append(list(message))
-            recvSound = False
-            if(doneRecv):
-                Server.current_noise = testBuff
+        self.connected.add(websocket)
+        recvSound = False
+        async for message in websocket:
+            if recvSound:
+                recvSound = False
+                Server.current_noise = list(message)
                 filename = self.save_noise()
                 await asyncio.wait([websocket.send(f'F:{filename}') for websocket in self.connected])
-                testBuff = []
-                doneRecv = False
-        elif message[0] == "M":
-            hash = hashlib.sha256()
-            hash.update(message[1:].encode('utf-8'))
-            Server.current_noise_hash = hash.hexdigest()
-            try:
-                await asyncio.wait([ws.send(message) for ws in self.connected])
-            except:
-                print("oopsie")
-        elif message[0] == "S":
-            print(message)
-            recvSound = True
-            [position, length] = message[2:].split("/")
-            if(position==length):
-                doneRecv = True
+            elif message[0] == "M":
+                hash = hashlib.sha256()
+                hash.update(message[1:].encode('utf-8'))
+                Server.current_noise_hash = hash.hexdigest()
+                try:
+                    await asyncio.wait([ws.send(message) for ws in self.connected])
+                except:
+                    print("oopsie")
+            elif message == "S":
+                recvSound = True
+            else:
+                print(message)
+
+
+async def main():
+    ws = Server()
+    async with ws.start():
+        await asyncio.Future()
 
 if __name__ == '__main__':
-  ws = Server()
-  asyncio.get_event_loop().run_until_complete(ws.start())
-  asyncio.get_event_loop().run_forever()
+    asyncio.run(main())
