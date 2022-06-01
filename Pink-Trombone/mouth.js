@@ -1,6 +1,5 @@
 const ws = new WebSocket("ws://localhost:5678/");
-var recorder;
-var buffer;
+var recorder, wav, buffer;
 function prepareMouth() {
     pinkTromboneElement.pinkTrombone.context = pinkTromboneElement.pinkTrombone.audioContext
     recorder = new Recorder(pinkTromboneElement.pinkTrombone)
@@ -21,10 +20,13 @@ function prepareMouth() {
     })
 };
 function sendData() {
-    recorder.getBuffer(e => {
-        buffer = e[0];
-        ws.send("S")
-        ws.send(buffer);
+    recorder.getBuffer(e => buffer = e);
+    recorder.exportWAV(e => {
+        wav = e
+        wav.arrayBuffer().then(e => {
+            ws.send("S")
+            ws.send(e)
+        })
     });
     recorder.clear();
 }
