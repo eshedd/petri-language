@@ -6,6 +6,8 @@ import websockets
 import hashlib
 import pickle
 import datetime
+from scipy.io import wavfile
+import numpy as np
 
 PORT = 8080
 
@@ -31,10 +33,14 @@ class Server:
         return websockets.serve(self.handler, self.get_host(), self.get_port())
 
     def save_noise(self):
-        fname = f'mouth_sounds/{Server.current_noise_hash}_{datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}.pickle'
-        with open(fname, 'wb') as f:
-            pickle.dump(Server.current_noise, f)
-        return fname
+        fname = f'{Server.current_noise_hash}_{datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}'
+        os.mkdir(f"mouth_sounds/{fname}")
+        with open(f"mouth_sounds/{fname}/{fname}.wav", 'wb') as f:
+            f.write(Server.current_noise)
+        with open(f"mouth_sounds/{fname}/{fname}.pickle", 'wb') as f:
+            sampRate, data = wavfile.read(f"mouth_sounds/{fname}/{fname}.wav")
+            pickle.dump(list(np.delete(data, 1, 1).flatten()), f)
+        return f"mouth_sounds/{fname}"
 
     async def handler(self, websocket, path):
         self.connected.add(websocket)
@@ -42,7 +48,7 @@ class Server:
         async for message in websocket:
             if recvSound:
                 recvSound = False
-                Server.current_noise = list(message)
+                Server.current_noise = message
                 filename = self.save_noise()
                 await asyncio.wait([websocket.send(f'F:{filename}') for websocket in self.connected])
             elif message[0] == "M":
