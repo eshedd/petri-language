@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import networkx as nx
+import asyncio, websockets, pickle
 
 import seed_handler
 from reality import World
@@ -61,15 +62,14 @@ class Memory:
         else:
             return np.e**(-0.7*age_in_hours**(1/6))
 
-# class VisualMemory(Memory):
-#     def __init__(self, object, salience:float):
-#         super(object, salience)
-
-# class AudioMemory(Memory):
-#     def __init__(self, object, salience:float):
-#         super(object, salience)
+class VisualMemory(Memory):
+    def __init__(self, object, salience:float):
+        super(object, salience)
+        
+class AudioMemory(Memory):
+    def __init__(self, object, salience:float):
+        super(object, salience)
     
-
 
 class Mind:
     '''
@@ -86,7 +86,7 @@ class Mind:
         self.capacity = capacity
         self.att_span = att_span
         self.stm_thresh = stm_thresh
-        self.focus = [None, None]
+        self.focus = [None, None]  # [object, distance]
         self.ltm = set()  # long term memory
         self.stm = set()  # short term memory (more salient)
 
@@ -102,7 +102,7 @@ class Mind:
         if p <= self.att_span:
             # focus stays on last object
             for percept in perceiving:
-                if percept[0] == self.focus[0]:
+                if percept[0] is self.focus[0]:
                     # last object still perceived
                     self.focus = percept  # object remains same, its distance updates
                     return
@@ -126,7 +126,9 @@ class Mind:
         horizon: max perceivable distance from Person
         '''
         memory = self.deep_remember(self.focus[0])
-        salience = np.e**((horizon/2 - self.focus[1]) * abs(np.random.normal(1)))
+        salience_mutation = abs(np.random.normal(0, 0.5))
+        salience = np.e**((horizon/2 - self.focus[1]) * salience_mutation)
+
         if not memory:  # focus is not an existing memory
             memory = Memory(self.focus[0], salience)
         else:  # focus is an existing memory
@@ -187,52 +189,57 @@ class Mind:
             if memory.object is object:
                 return memory
         return None
-
-    # def memory_full(self) -> bool:
-    #     total_salience = 0
-    #     for memory in self.memories.items():
-    #         total_salience += memory.salience
-    #     return total_salience <= self.capacity
     
-    def show_network(self, name:str, highlight:Memory=None) -> None:
+    def get_action(self):
+        memory = self.deep_remember(self.focus[0])
+        # TODO: How do they decided how to take an action???
+        # movement, speaking, doing???
+
+
+    def show_network(self, name:str) -> None:
         '''
-        Display the network as a directed graph with an optional highlighted memory,
-        otherwise the highlighted memory is the focus
+        Display the long term memory network as a directed graph.
+        ---
+        name: name of Person
         '''
-        # highlight = self.deep_remember(self.focus[0])
-        # if memory:
-        #     highlight = memory
-        # print(self.ltm)
         edges = []
         edges_labels = {}
+        disconnected_nodes = []
         for memory in self.ltm:
+            connected = False
             for connection in memory.connections:
-                edges.append((connection, memory))
-                edges_labels[(connection, memory)] = round(memory.get_strength(connection), 3)
+                edges.append((memory, connection))
+                edges_labels[(memory, connection)] = round(memory.get_strength(connection), 3)
+                connected = True
+            if not connected:
+                disconnected_nodes.append(memory)
+
         G = nx.DiGraph()
         G.add_edges_from(edges)
-        print(edges)
-        node_sizes = [memory.salience * 1000 for memory in G.nodes]
-        
+        G.add_nodes_from(disconnected_nodes)
+        saliences = [memory.salience for memory in G.nodes]
+        node_multiplier = int('1' + ('0' * (5 - len(str(int(max(saliences)))))))
+        node_sizes = [s * node_multiplier for s in saliences]  # scales the nodes according to saliences
         pos = nx.spring_layout(G)
-        # nx.draw_networkx_nodes(G, pos, cmap=plt.get_cmap('jet'), 
-        #                     node_color = values, node_size = 500)
         nx.draw_networkx(G, pos, arrows=True, with_labels=True, node_size=node_sizes)
         nx.draw_networkx_edge_labels(G, pos, edge_labels=edges_labels, font_color='red')
         plt.title(f'{name} memory network')
+        print(f'\n{name} memory network contents')
+        print('  connections:', edges)
+        print('  singletons:', disconnected_nodes)
         plt.show()
 
 
 class Person:
     '''
     A person perceives objects in its environment, forms memories,
-    converses with other Persons
+    converses with other Persons.
     '''
     counter = 0
     names = ['grant', 'ethan', 'jennifer', 'brent', 'braun', 'kevin', 'claudia', 'brian', 'dane', 'hunter', 'clinton', 'ashley']
     def __init__(self, parent=None):
         '''
-        Constructs mind of Person and sets biophysiological facts
+        Constructs mind of Person and sets biophysiological facts.
         ---
         parent: the Person(s) passing traits to this Person
         '''
@@ -260,6 +267,8 @@ class Person:
         if att_span > 1: att_span = 1
         elif att_span < 0: att_span = 0
         self.mind = Mind(capacity, att_span, stm_thresh)
+
+        self.mouth = Mouth()
         
         seed_handler.save_seed(seed+1)
     
@@ -269,6 +278,29 @@ class Person:
         self.mind.memorize(self.perceiving, self.horizon, world)
         self.mind.move_memories()
         self.age += 1
+    
+    def act(self, world:World) -> None:
+        # self.mind.get_action()
+        self.speak(world)
+
+    def speak(self, world:World) -> None:
+        '''
+        Person sometimes speaks from memory, other times speaks randomly.
+        '''
+        # random speech, params by rohan
+        seed = seed_handler.load_seed()
+        np.random.seed(seed)
+        sound = self.mouth.speak(tongue={"index": np.random.uniform(0,35), "diameter": np.random.uniform(0,6)},
+                        constriction={"index": np.random.uniform(2,50), "diameter": np.random.uniform(-1,4)},
+                        timeout=np.random.uniform(0.2,3),
+                        intensity=np.random.uniform(0.3,1),
+                        tenseness=np.random.uniform(0,1),
+                        frequency=np.random.uniform(20,1000))
+
+        world.attribute_sound(self, sound)
+
+        seed_handler.save_seed(seed+1)
+        
     
     def show_network(self) -> None:
         self.mind.show_network(self.name)
@@ -280,23 +312,95 @@ class Person:
         print(f'  horizon: {self.horizon}')
         print(f'  capacity: {self.mind.capacity}')
         print(f'  attention span: {self.mind.att_span}')
-        print(f'  perceiving: {self.perceiving}')
         print(f'  focus: {self.mind.focus}')
+        print(f'  perceiving: {self.perceiving}')
 
     def __str__(self):
         return self.name
     def __repr__(self):
         return str(self)
 
+class Sound:
+    def __init__(self, directory:str, properties:tuple) -> None:
+        '''
+        filename: wave file path
+        properties: settings
+        '''
+        self.directory = directory
+        self.name = directory.split('/')[1]
+        self.properties = properties
+        self.volume = properties[3]  # intensity used as volume for now
+        # get sound wave from pickle
+        with (open(f'{directory}/{self.name}.pickle', 'rb')) as openfile:
+            self.wave = np.asarray(pickle.load(openfile))
+    
+    def __str__(self):
+        return 's:' + self.name[:8]
+    def __repr__(self):
+        return str(self)
+    
+    def compare(sound1:object, sound2:object) -> None:
+        # This looks like an ideal application for the cross correlation function, 
+        # which will show the correlation between the two waveforms for every time offset between the two. 
+        # This is done by first removing the mean from each waveform, 
+        # and then multiplying the two resulting zero-mean waveforms together element by element and summing the result, 
+        # repeating for each possible sample shift between the waveforms. 
+        # These results can be scaled by the product of the standard deviation of the two waveforms, 
+        # which would normalize the result similar to what is done in the Pearson correlation coefficient.
+        pass
 
-# dist = np.random.normal(1, size=100)
+class Mouth:
+    '''
+    Capable of holding all parameters of a phone.
+    '''
+    def __init__(self):
+        self.tongue = {"index": 0, "diameter": 0}
+        self.constriction = {"index": 0, "diameter": 0}
+        self.timeout = 0
+        self.intensity = 0
+        self.tenseness = 0
+        self.frequency = 0
+        self.duration = 1
+
+    def speak(self, tongue:float, constriction:float, timeout:float, 
+            intensity:float, tenseness:float, frequency:float, human_audible:bool=False) -> Sound:
+        '''
+        Prepares the mouth to speak with provided parameters and returns file of sound location.
+        ---
+        human_audible: plays sound if True
+        '''
+        self.tongue = tongue
+        self.constriction = constriction
+        self.timeout = timeout
+        self.intensity = intensity
+        self.tenseness = tenseness
+        self.frequency = frequency
+
+        async def send_socket(mouth: Mouth):
+            async with websockets.connect("ws://localhost:5678") as websocket:
+                await websocket.send(f"M:{mouth}")
+                new_message = await websocket.recv()
+                if new_message[0:2] != 'F:':
+                    new_sound = await websocket.recv()
+                print(new_sound[2:])
+                return Sound(new_sound[2:], (self.tongue, 
+                                self.constriction, self.timeout, 
+                                self.intensity, self.tenseness,
+                                self.frequency, self.duration)
+                            )
+
+        loop = asyncio.get_event_loop()
+        coroutine = send_socket(self)
+        sound = loop.run_until_complete(coroutine)
+        return sound
+
+    def __str__(self):
+        return f'{self.tongue["index"]}|{self.tongue["diameter"]}| \
+                {self.constriction["index"]}|{self.constriction["diameter"]}|\
+                {self.duration}|{self.timeout}|{self.intensity}|\
+                {self.tenseness}|{self.frequency}'
+
+
+# dist = abs(np.random.normal(0, 0.5, size=100))
 # plt.hist(dist)
-# plt.show()
-
-
-# g = nx.Graph()
-# g.add_edges_from([('1','2'), ('2','3'), ('2','4'), ('3','4')])
-# d = dict(g.degree)
-
-# nx.draw(g, nodelist=d.keys(), node_size=[v * 100 for v in d.values()], with_labels=True)
 # plt.show()
