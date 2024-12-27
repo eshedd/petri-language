@@ -3,8 +3,9 @@ import numpy as np
 
 import seed_handler
 
+
 class World:
-    def __init__(self, width:int, height:int, seed:int):
+    def __init__(self, width: int, height: int, seed: int):
         seed = seed_handler.load_seed()
         np.random.seed(seed)
 
@@ -17,7 +18,7 @@ class World:
                 self.tiles[i].append([])
         self.objects = {}  # object id with coordinates
 
-    def create_person(self, x:int, y:int, parent=None):
+    def create_person(self, x: int, y: int, parent=None):
         '''
         Inits and places a new Person in World.
         '''
@@ -31,7 +32,7 @@ class World:
         self.tiles[x][y] = [p]
         self.objects[id(p)] = (x, y)
         return p
-    
+
     def attribute_sound(self, source_obj, sound) -> None:
         '''
         Place Sound on its source object in World.
@@ -45,18 +46,20 @@ class World:
 
     def get_dist_between(self, obj1, obj2) -> float:
         '''
-        Gets distance between two provided objects, first checking they exist in the world.
+        Gets distance between two provided objects,
+        first checking they exist in the world.
         '''
         assert id(obj1) in self.objects
         assert id(obj2) in self.objects
-        
+
         x1, y1 = self.objects[id(obj1)]
         x2, y2 = self.objects[id(obj2)]
         return self.euclidean_dist(x1, y1, x2, y2)
 
-    def get_nearby_from_object(self, obj, radius:float) -> list:
+    def get_nearby_from_object(self, obj, radius: float) -> list:
         '''
-        Returns list of nearby objects within a radius relative to a provided object.
+        Returns list of nearby objects within a radius relative
+        to a provided object.
         '''
         coords = self.get_coords(obj)
         if not coords:
@@ -69,9 +72,10 @@ class World:
         '''
         return self.objects.get(id(obj))
 
-    def get_nearby(self, x:int, y:int, radius:float) -> list:
+    def get_nearby(self, x: int, y: int, radius: float) -> list:
         '''
-        Returns list of nearby objects within a radius relative to provided coordinates.
+        Returns list of nearby objects within a radius relative
+        to provided coordinates.
         '''
         from anthrop import Sound
         nearby = []
@@ -83,12 +87,13 @@ class World:
                 dist = self.euclidean_dist(x, y, i, j)
                 for obj in objs:
                     if type(obj) is Sound:
-                        nearby.append([obj, dist/obj.volume])  # inverse relative volume
+                        # inverse relative volume
+                        nearby.append([obj, dist/obj.volume])
                     elif dist <= radius:
                         nearby.append([obj, dist])
         return nearby
 
-    def euclidean_dist(self, x1:int, y1:int, x2:int, y2:int) -> float:
+    def euclidean_dist(self, x1: int, y1: int, x2: int, y2: int) -> float:
         return np.sqrt((x1-x2)**2+(y1-y2)**2)
 
     def show(self) -> None:

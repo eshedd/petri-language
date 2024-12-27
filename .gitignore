@@ -1,7 +1,4 @@
-# Byte-compiled / optimized / DLL files
-__pycache__/
-*.py[cod]
-*$py.class
-**/__pycache__
-
-seed_val.txt
+.python-version
+.venv
+**/__pycache__/*
+v2/seed_val.txt
