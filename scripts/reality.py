@@ -45,7 +45,7 @@ class World:
                   f'({x},{y})')
             return None
 
-        from anthrop import Person
+        from scripts.anthrop import Person
         p = Person(parent)
         # place person
         self.tiles[x][y] = [p]
@@ -128,7 +128,7 @@ class World:
         y: y-coordinate from which to calculate distance
         radius: distance within which to find nearby objects
         '''
-        from anthrop import Sound
+        from scripts.anthrop import Sound
         nearby = []
         for i in range(len(self.tiles)):
             for j in range(len(self.tiles[i])):

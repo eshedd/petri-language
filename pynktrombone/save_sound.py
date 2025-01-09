@@ -2,7 +2,7 @@ from timeit import timeit
 import numpy as np
 import soundfile as sf
 
-from voc import Voc
+from pynktrombone.voc import Voc
 
 CHUNK = 512
 # samplerate = 48000

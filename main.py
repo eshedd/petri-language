@@ -1,14 +1,13 @@
 import argparse
 import numpy as np
 
-import seed_handler
-# from anthrop import Person
-from reality import World
+from scripts.seed_handler import save_seed
+from scripts.reality import World
 
 
 def main(width: int, height: int, seed: int):
-    seed_handler.save_seed(seed)
-    np.random.seeds(seed)
+    save_seed(seed)
+    np.random.seed(seed)
     world = World(width, height)
     # population = 5
     # np.random.uniform(0, width, population).astype(int)

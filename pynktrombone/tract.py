@@ -1,7 +1,7 @@
 import numpy as np
 
-import voc
-from transient import TransientPool
+from pynktrombone import voc
+from pynktrombone.transient import TransientPool
 
 
 class Tract:

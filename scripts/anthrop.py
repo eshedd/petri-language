@@ -6,7 +6,8 @@ import websockets
 import pickle
 
 # import seed_handler
-from reality import World
+from scripts.reality import World
+from pynktrombone import save_sound
 
 
 # Human eyes operate at 60fps -->
@@ -345,6 +346,7 @@ class Person:
         '''
         # self.mind.get_action()
         self.speak(world)
+        save_sound()
 
     def speak(self, world: World) -> None:
         '''

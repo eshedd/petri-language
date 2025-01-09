@@ -1,7 +1,7 @@
 from math import exp, sin, log, sqrt
 from random import random
 
-import voc
+from pynktrombone import voc
 
 class Glottis:
 

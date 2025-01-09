@@ -7,8 +7,8 @@ import numpy as np
 
 # from pynkTrombone.glottis import Glottis
 # from pynkTrombone.tract import Tract
-from glottis import Glottis
-from tract import Tract
+from pynktrombone.glottis import Glottis
+from pynktrombone.tract import Tract
 
 rnd.seed(a=42)
 

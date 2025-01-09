@@ -1,7 +1,8 @@
 from itertools import count
 from typing import List
 
-import voc
+from pynktrombone import voc
+
 
 class Transient:
     ids = count(0)
