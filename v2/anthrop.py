@@ -5,7 +5,7 @@ import asyncio
 import websockets
 import pickle
 
-import seed_handler
+# import seed_handler
 from reality import World
 
 
@@ -79,7 +79,7 @@ class VisualMemory(Memory):
         super(object, salience)
 
 
-class AudioMemory(Memory):
+class AuditoryMemory(Memory):
     def __init__(self, object, salience: float):
         super(object, salience)
 
@@ -90,14 +90,18 @@ class Mind:
     '''
     def __init__(self, capacity: float, att_span: float, stm_thresh: float):
         '''
-        Constructs the mind of a Person.
+        Constructs the Mind of a Person.
 
         Parameters:
         capacity: space available for memories in long term memory
         att_span: attention span for focus, float between [0, 1]
         stm_thresh: threshold for a memory to stay in short term memory
         '''
-        assert att_span >= 0 and att_span <= 1
+        try:
+            assert att_span >= 0 and att_span <= 1
+        except AssertionError:
+            print('MIND NOT CREATED: attention span must be between 0 and 1')
+            return None
 
         self.capacity = capacity
         self.att_span = att_span
@@ -106,48 +110,44 @@ class Mind:
         self.ltm = set()  # long term memory
         self.stm = set()  # short term memory (more salient)
 
-    def set_focus(self, perceiving: list, horizon: float):
+    def set_focus(self, perceiving: list, horizon: float) -> None:
         '''
-        Moves focus based on attention span and distance of percepts
+        Changes focus based on attention span and distance of percepts
         from Person
 
         Parameters:
-        perceiving: list of perceived objects in environment
+        perceiving: list of perceived objects in environment \
                     with relative distances
         horizon: max perceivable distance from Person
         '''
         # attention span determines whether focus on last object continues
-        p = np.random.uniform()
-        if p <= self.att_span:
-            # focus stays on last object
-            for percept in perceiving:
-                if percept[0] is self.focus[0]:  # last object still perceived
+        p = np.random.uniform(low=0, high=1.0)
+        if p <= self.att_span:  # focus stays on last object
+            for obj, dist in perceiving:
+                if obj is self.focus[0]:  # last object still perceived
                     # object remains same, its distance updates
-                    self.focus = percept
+                    self.focus[1] = dist
                     return
+
         # changes focus to something nearby
         # (items farther from horizon are more likely)
-        reverse_dists = 0
-        for percept in perceiving:
-            dist = percept[1]
-            reverse_dists += horizon - dist
-        gaze = np.random.uniform(0, reverse_dists)
-        for percept in perceiving:
-            reverse_dists -= horizon - percept[1]
-            if gaze >= reverse_dists:
-                self.focus = percept
-                return
+        weights = [horizon - dist for _, dist in perceiving]
+        self.focus = perceiving[np.random.choice(
+            a=range(len(perceiving)),
+            p=weights/np.sum(weights)
+        )]
 
-    def memorize(self, perceiving: list, horizon: float, world):
+    def memorize(self, perceiving: list, horizon: float, world: World) -> None:
         '''
         Encode focus into memory, associating surrounding percepts with it
 
         Parameters:
-        perceiving: list of perceived objects in environment
+        perceiving: list of perceived objects in environment \
                     with relative distances
         horizon: max perceivable distance from Person
+        world: the World in which the Person exists
         '''
-        memory = self.deep_remember(self.focus[0])
+        memory = self.search_ltm(self.focus[0])
         salience_mutation = abs(np.random.normal(0, 0.5))
         salience = np.e**((horizon/2 - self.focus[1]) * salience_mutation)
 
@@ -168,11 +168,12 @@ class Mind:
 
         Parameters:
         core_memory: memory to have perceiving objects' memories connected to
-        perceiving: list of perceived objects in environment
+        perceiving: list of perceived objects in environment \
                     with relative distances
+        world: the World in which the Person exists
         '''
-        for percept in perceiving:
-            memory = self.shallow_remember(percept[0])
+        for obj, _ in perceiving:
+            memory = self.search_ltm(obj)
             if not memory:  # percept not a memory in short term memory
                 continue
             if memory is core_memory:
@@ -200,7 +201,7 @@ class Mind:
             if memory.salience >= self.stm_thresh:
                 self.stm.add(memory)
 
-    def shallow_remember(self, object) -> Memory:
+    def search_stm(self, object) -> Memory:
         '''
         Returns memory if the object is a memory in short term memory
         '''
@@ -209,7 +210,7 @@ class Mind:
                 return memory
         return None
 
-    def deep_remember(self, object) -> Memory:
+    def search_ltm(self, object) -> Memory:
         '''
         Returns memory if the object is a memory in long term memory
         '''
@@ -219,7 +220,7 @@ class Mind:
         return None
 
     def get_action(self):
-        # memory = self.deep_remember(self.focus[0])
+        # memory = self.search_ltm(self.focus[0])
         # TODO: How do they decided how to take an action???
         # movement, speaking, doing???
         pass
@@ -256,15 +257,15 @@ class Mind:
         node_sizes = [s * node_multiplier for s in saliences]
         pos = nx.spring_layout(G)
         nx.draw_networkx(
-            Graph=G,
-            Mapping=pos,
+            G=G,
+            pos=pos,
             arrows=True,
             with_labels=True,
             node_size=node_sizes
         )
         nx.draw_networkx_edge_labels(
-            Graph=G,
-            Mapping=pos,
+            G=G,
+            pos=pos,
             edge_labels=edges_labels,
             font_color='red'
         )
@@ -277,10 +278,10 @@ class Mind:
 
 class Person:
     '''
-    A person perceives objects in its environment, forms memories,
+    A Person perceives objects in its environment, forms memories,
     converses with other Persons.
     '''
-    counter = 0
+    person_counter = 0
     names = [
         'grant', 'ethan', 'jennifer', 'brent', 'braun', 'kevin', 'claudia',
         'brian', 'dane', 'hunter', 'clinton', 'ashley'
@@ -293,35 +294,42 @@ class Person:
         Parameters:
         parent: the Person(s) passing traits to this Person
         '''
-        seed = seed_handler.load_seed()
-        np.random.seed(seed)
+        # seed = seed_handler.load_seed()
+        # np.random.seed(seed)
 
         self.alive = True
         self.age = 0
         self.perceiving = []  # objects Person perceives
         self.horizon = 3  # distance Person can see
-        self.name = Person.names[Person.counter]
-        Person.counter += 1
+        self.name = Person.names[Person.person_counter]
+        Person.person_counter += 1
 
         # construct mind
-        capacity = np.random.normal(10, 2)
-        att_span = np.random.normal(0.5, 0.2)
-        stm_thresh = abs(np.random.normal(1, 0.25))
-        if parent:
+        capacity = np.random.normal(10, 2)  # capacity of long term memory
+        att_span = np.random.normal(0.5, 0.2)  # attn_span = attention span
+        stm_thresh = abs(np.random.normal(1, 0.25))  # stm = short term memory
+        if parent:  # handle genetic mutations from parent
             capacity_mutation = np.random.normal(0, 1)
             att_span_mutation = np.random.normal(0, 0.05)
             stm_thresh_mutation = np.random.normal(0, 0.05)
             capacity = parent.mind.capacity + capacity_mutation
             att_span = parent.mind.att_span + att_span_mutation
             stm_thresh = parent.mind.stm_threh + stm_thresh_mutation
-        att_span = max(0, min(att_span, 1))
+        att_span = max(0, min(att_span, 1))  # attn_span between 0 and 1
         self.mind = Mind(capacity, att_span, stm_thresh)
 
+        # construct mouth
         self.mouth = Mouth()
 
-        seed_handler.save_seed(seed+1)
+        # seed_handler.save_seed(seed+1)
 
     def perceive(self, world: World) -> None:
+        '''
+        Person perceives objects in its environment and forms memories.
+
+        Parameters:
+        world: the World in which the Person exists
+        '''
         self.perceiving = world.get_nearby_from_object(self, self.horizon)
         self.mind.set_focus(self.perceiving, self.horizon)
         self.mind.memorize(self.perceiving, self.horizon, world)
@@ -329,16 +337,25 @@ class Person:
         self.age += 1
 
     def act(self, world: World) -> None:
+        '''
+        Wrapper for Person to take an action.
+
+        Parameters:
+        world: the World in which the Person exists
+        '''
         # self.mind.get_action()
         self.speak(world)
 
     def speak(self, world: World) -> None:
         '''
         Person sometimes speaks from memory, other times speaks randomly.
+
+        Parameters:
+        world: the World in which the Person exists
         '''
         # random speech, params by rohan
-        seed = seed_handler.load_seed()
-        np.random.seed(seed)
+        # seed = seed_handler.load_seed()
+        # np.random.seed(seed)
         sound = self.mouth.speak(
             tongue={
                 "index": np.random.uniform(0, 35),
@@ -356,7 +373,7 @@ class Person:
 
         world.attribute_sound(self, sound)
 
-        seed_handler.save_seed(seed+1)
+        # seed_handler.save_seed(seed+1)
 
     def show_network(self) -> None:
         self.mind.show_network(self.name)

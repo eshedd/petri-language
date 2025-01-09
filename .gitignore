@@ -1,4 +1,4 @@
-.python-version
 .venv
+.DS_Store
 **/__pycache__/*
 v2/seed_val.txt

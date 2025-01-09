@@ -8,27 +8,28 @@ from reality import World
 
 def main(width: int, height: int, seed: int):
     seed_handler.save_seed(seed)
-    np.random.seed(seed)
-    world = World(width, height, seed)
+    np.random.seeds(seed)
+    world = World(width, height)
     # population = 5
     # np.random.uniform(0, width, population).astype(int)
     # np.random.uniform(0, height, population).astype(int)
-    pop = [
-        world.create_person(1, 0),
-        world.create_person(3, 0),
-        world.create_person(0, 1),
-        world.create_person(0, 2)
-    ]
+    world.create_person(1, 0),
+    world.create_person(3, 0),
+    world.create_person(0, 1),
+    world.create_person(0, 2)
+
     world.show()
+    print(world.population)
     # for _ in range(1):
-    #     pop[0].perceive(world)
-    #     pop[0].act(world)
-    #     pop[0].stats(world)
-    pop[0].perceive(world)
-    pop[0].act(world)
-    pop[1].perceive(world)
-    pop[1].stats(world)
-    # pop[0].show_network()
+    #     world.population[0].perceive(world)
+    #     world.population[0].act(world)
+    #     world.population[0].stats(world)
+    world.population[0].perceive(world)
+    world.population[0].stats(world)
+    # world.population[0].act(world)
+    world.population[1].perceive(world)
+    world.population[1].stats(world)
+    # world.population[0].show_network()
 
 
 if __name__ == '__main__':
@@ -50,3 +51,11 @@ if __name__ == '__main__':
 # feed, then wander
 # inner product of fourier
 # add muted feature when speaking and control with human_audible in Mouth.speak
+
+# Score Metrics:
+# score similarity of connections between sounds and objects in memory(?)
+# score by performance on a "test" to see what they've learned(?)
+# score by how many generations they've survived(?)
+# score by how many offspring they've had(?)
+
+# https://github.com/zakaton/Pink-Trombone
